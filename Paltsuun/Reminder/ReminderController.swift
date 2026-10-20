@@ -22,6 +22,8 @@ final class ReminderController {
     @ObservationIgnored private var armed: [String: Date] = [:]
     @ObservationIgnored private var opened: [String: Date] = [:]
     @ObservationIgnored private var dismissed: [String: Date] = [:]
+    /// Meetings whose countdown was shown manually, before the lead time.
+    @ObservationIgnored private var shown: [String: Date] = [:]
 
     init(store: MeetingStore) {
         self.store = store
@@ -39,11 +41,27 @@ final class ReminderController {
         tick()
     }
 
+    /// Whether the countdown can be shown manually: the meeting hasn't started and isn't declined.
+    func canShow(_ meeting: Meeting) -> Bool {
+        !meeting.isDeclined && meeting.start > Date()
+    }
+
+    /// Shows the meeting's countdown now, even when the meeting is further away than the lead time.
+    func show(_ meeting: Meeting) {
+        guard canShow(meeting) else { return }
+        let key = Self.key(for: meeting)
+        shown[key] = meeting.start
+        dismissed[key] = nil
+        tick()
+        panels[key]?.orderFrontRegardless()
+    }
+
     /// Hides the meeting's countdown. Its link isn't opened automatically either.
     func dismiss(_ meeting: Meeting) {
         let key = Self.key(for: meeting)
         dismissed[key] = meeting.start
         armed[key] = nil
+        shown[key] = nil
         tick()
     }
 
@@ -56,7 +74,7 @@ final class ReminderController {
         for meeting in meetings {
             let key = Self.key(for: meeting)
             let remaining = meeting.start.timeIntervalSince(now)
-            if remaining > 0, remaining <= lead {
+            if remaining > 0, remaining <= lead || shown[key] != nil {
                 armed[key] = meeting.start
             } else if remaining <= 0, armed.removeValue(forKey: key) != nil,
                       -remaining < Self.startedDisplayDuration,
@@ -70,7 +88,7 @@ final class ReminderController {
 
         let visible = meetings.filter { meeting in
             let remaining = meeting.start.timeIntervalSince(now)
-            if remaining > 0 { return remaining <= lead }
+            if remaining > 0 { return remaining <= lead || shown[Self.key(for: meeting)] != nil }
             let limit = opened[Self.key(for: meeting)] != nil ? Self.openedDisplayDuration : Self.startedDisplayDuration
             return -remaining < limit
         }
@@ -102,6 +120,7 @@ final class ReminderController {
         armed = armed.filter { $0.value >= date }
         opened = opened.filter { $0.value >= date }
         dismissed = dismissed.filter { $0.value >= date }
+        shown = shown.filter { $0.value >= date }
     }
 
     /// Includes the start time so a rescheduled meeting reminds again.

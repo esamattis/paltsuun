@@ -4,6 +4,7 @@ import SwiftUI
 struct ContentView: View {
     @Environment(MeetingStore.self) private var store
     @Environment(CalendarSync.self) private var calendarSync
+    @Environment(ReminderController.self) private var reminders
     @State private var month = Date()
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
     @State private var draft: MeetingDraft?
@@ -26,6 +27,8 @@ struct ContentView: View {
                 onCreate: { newMeeting(on: selectedDate) },
                 isEditable: store.isEditable,
                 onEdit: edit,
+                canShowCountdown: reminders.canShow,
+                onShowCountdown: reminders.show,
                 onDelete: delete
             )
             .frame(width: 300)

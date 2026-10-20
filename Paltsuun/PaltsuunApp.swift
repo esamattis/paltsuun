@@ -16,6 +16,7 @@ struct PaltsuunApp: App {
             ContentView()
                 .environment(appDelegate.store)
                 .environment(appDelegate.calendarSync)
+                .environment(appDelegate.reminders)
         }
         .defaultSize(width: 1100, height: 720)
 
@@ -28,6 +29,7 @@ struct PaltsuunApp: App {
             MenuBarContent()
                 .environment(appDelegate.store)
                 .environment(appDelegate.calendarSync)
+                .environment(appDelegate.reminders)
         } label: {
             MenuBarLabel(reminders: appDelegate.reminders)
         }

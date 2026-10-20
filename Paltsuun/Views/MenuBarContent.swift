@@ -4,6 +4,7 @@ import SwiftUI
 struct MenuBarContent: View {
     @Environment(MeetingStore.self) private var store
     @Environment(CalendarSync.self) private var calendarSync
+    @Environment(ReminderController.self) private var reminders
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
     @AppStorage(AppSettings.leadMinutesKey) private var leadMinutes = AppSettings.defaultLeadMinutes
@@ -30,6 +31,12 @@ struct MenuBarContent: View {
 
         Divider()
 
+        let next = store.meetings.first(where: reminders.canShow)
+        Button("Show Next Countdown") {
+            if let next { reminders.show(next) }
+        }
+        .keyboardShortcut("s")
+        .disabled(next == nil)
         Button("Open Calendar…", action: showCalendar)
             .keyboardShortcut("o")
         if calendarSync.hasConnectedSources {

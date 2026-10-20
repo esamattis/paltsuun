@@ -14,6 +14,10 @@ default browser.
   are placed below or beside each other in start order, so they don't overlap. You can
   drag a countdown anywhere, and new countdowns appear where you last dragged one. The
   small ✕ button dismisses a countdown, and its link then isn't opened automatically.
+- **Show a countdown early.** Choose *Show Next Countdown* (⌘S) from the menu bar menu,
+  or right-click a meeting in the calendar and choose *Show Countdown*, to show its
+  countdown right away instead of waiting for the reminder time. This also brings back
+  a countdown you dismissed.
 - **Urgency colors.** The countdown starts green and turns amber, orange and finally
   red as the start time approaches. It flashes during the last 10 seconds.
 - **Auto-join.** When the countdown ends, the meeting link (Google Meet, Zoom, Teams,

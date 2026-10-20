@@ -7,6 +7,8 @@ struct DayAgendaView: View {
     let onCreate: () -> Void
     let isEditable: (Meeting) -> Bool
     let onEdit: (Meeting) -> Void
+    let canShowCountdown: (Meeting) -> Bool
+    let onShowCountdown: (Meeting) -> Void
     let onDelete: (Meeting) -> Void
 
     var body: some View {
@@ -45,6 +47,9 @@ struct DayAgendaView: View {
                             Button(editable ? "Edit…" : "Show Details…") { onEdit(meeting) }
                             if let url = meeting.url {
                                 Button("Open Meeting Link") { NSWorkspace.shared.open(url) }
+                            }
+                            if canShowCountdown(meeting) {
+                                Button("Show Countdown") { onShowCountdown(meeting) }
                             }
                             if editable {
                                 Divider()
