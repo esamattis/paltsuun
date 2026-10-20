@@ -10,8 +10,10 @@ default browser.
 
 - **Floating countdown.** Shows a large countdown with the meeting name and a
   *Join meeting* button. It stays on top of all windows, spaces and full-screen apps.
-  You can drag it anywhere, and it remembers its position. It has no close button, so
-  it can't be dismissed by accident.
+  Each meeting gets its own countdown. Countdowns that are on screen at the same time
+  are placed below or beside each other in start order, so they don't overlap. You can
+  drag a countdown anywhere, and new countdowns appear where you last dragged one. The
+  small ✕ button dismisses a countdown, and its link then isn't opened automatically.
 - **Urgency colors.** The countdown starts green and turns amber, orange and finally
   red as the start time approaches. It flashes during the last 10 seconds.
 - **Auto-join.** When the countdown ends, the meeting link (Google Meet, Zoom, Teams,

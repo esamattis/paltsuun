@@ -3,13 +3,16 @@ import SwiftUI
 
 struct ReminderView: View {
     let controller: ReminderController
+    /// The reminder key of the meeting this view counts down to.
+    let key: String
 
     var body: some View {
-        if let meeting = controller.current {
+        if let meeting = controller.reminders[key] {
             ReminderCard(
                 meeting: meeting,
                 remaining: meeting.start.timeIntervalSince(controller.now),
-                leadTime: controller.leadTime
+                leadTime: controller.leadTime,
+                onDismiss: { controller.dismiss(meeting) }
             )
         }
     }
@@ -19,6 +22,7 @@ struct ReminderCard: View {
     let meeting: Meeting
     let remaining: TimeInterval
     let leadTime: TimeInterval
+    var onDismiss: (() -> Void)?
 
     private var seconds: Int { Int(remaining.rounded(.up)) }
 
@@ -69,6 +73,22 @@ struct ReminderCard: View {
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+        }
+        .overlay(alignment: .topTrailing) {
+            if let onDismiss {
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .frame(width: 18, height: 18)
+                        .background(.white.opacity(0.18), in: Circle())
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.white.opacity(0.85))
+                .focusEffectDisabled()
+                .help("Dismiss")
+                .padding(10)
+            }
         }
         .animation(.easeInOut(duration: 0.4), value: seconds)
     }
