@@ -12,32 +12,14 @@ default browser.
 
 ## Features
 
-- **Floating countdown.** Shows a large countdown with the meeting name and a
-  *Join meeting* button. It stays on top of all windows, spaces and full-screen apps.
-  Each meeting gets its own countdown. Countdowns that are on screen at the same time
-  are placed below or beside each other in start order, so they don't overlap. You can
-  drag a countdown anywhere, and new countdowns appear where you last dragged one. The
-  small ✕ button dismisses a countdown, and its link then isn't opened automatically.
-- **Show a countdown early.** Choose *Show Next Countdown* (⌘S) from the menu bar menu,
-  or right-click a meeting in the calendar and choose *Show Countdown*, to show its
-  countdown right away instead of waiting for the reminder time. This also brings back
-  a countdown you dismissed.
-- **Urgency colors.** The countdown starts green and turns amber, orange and finally
-  red as the start time approaches. It flashes during the last 10 seconds.
-- **Auto-join.** When the countdown ends, the meeting link (Google Meet, Zoom, Teams,
-  or any URL) opens automatically.
-- **Start sound.** A sound plays when a meeting starts. You can pick the sound, or turn
-  it off, in *Settings…*.
-- **Lives in the menu bar.** Paltsuun starts hidden in the menu bar. If Google Calendar
-  credentials haven't been entered yet, it opens *Settings* instead. The menu
-  bar icon lists upcoming meetings and shows the remaining time while a countdown is
-  running. Closing or minimizing the calendar window hides the app from the Dock.
-- **Calendar view.** A month view for adding, editing and deleting meetings.
-  Double-click a day to add a meeting, click a meeting to edit it, or right-click it
-  for more actions.
-- **Google Calendar.** Syncs your primary Google Calendar every 15 minutes. Meetings
-  you have declined are shown crossed out and never remind you.
-- **Start at login.** Optionally start Paltsuun when you log in.
+- **Floating countdown** above all windows, spaces and full-screen apps, with a
+  *Join meeting* button. It changes from green to red as the meeting approaches.
+- **Auto-join.** Opens the meeting link (Google Meet, Zoom, Teams or any URL) when the
+  countdown ends.
+- **Start sound** when a meeting starts.
+- **Menu bar app** that lists upcoming meetings.
+- **Calendar view** for adding and editing meetings.
+- **Google Calendar sync.** Declined meetings never remind you.
 
 ## Settings
 
