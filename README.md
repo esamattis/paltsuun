@@ -1,3 +1,7 @@
+
+
+<img width="100" height="100" alt="image" src="https://github.com/user-attachments/assets/2f467c11-c746-4dfe-a861-a31bad1889ce" />
+
 # Paltsuun
 
 A macOS menu bar app that makes sure you never miss the start of a meeting.
