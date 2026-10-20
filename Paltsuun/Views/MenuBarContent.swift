@@ -88,7 +88,7 @@ struct MenuBarLabel: View {
                 Text(Countdown.string(for: meeting.start.timeIntervalSince(reminders.now)))
                     .monospacedDigit()
             } else {
-                Image(systemName: "calendar.badge.clock")
+                Image("MenuBarIcon")
             }
         }
         .onAppear(perform: openSettingsIfUnconfigured)
