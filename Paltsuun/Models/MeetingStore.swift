@@ -93,8 +93,13 @@ final class MeetingStore {
         return meetings.filter { $0.start < end && ($0.end > start || $0.start == start) }
     }
 
+    /// Meetings that haven't ended yet, leaving out declined ones.
     func upcomingMeetings(after date: Date = Date(), limit: Int) -> [Meeting] {
-        Array(meetings.filter { $0.end > date }.prefix(limit))
+        Array(meetings.filter { $0.end > date && !$0.isDeclined }.prefix(limit))
+    }
+
+    func providerName(for meeting: Meeting) -> String? {
+        provider(for: meeting)?.displayName
     }
 
     private func provider(for meeting: Meeting) -> (any CalendarProvider)? {

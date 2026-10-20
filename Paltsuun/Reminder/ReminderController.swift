@@ -39,8 +39,9 @@ final class ReminderController {
         let now = Date()
         self.now = now
         let lead = leadTime
+        let meetings = store.meetings.filter { !$0.isDeclined }
 
-        for meeting in store.meetings {
+        for meeting in meetings {
             let key = Self.key(for: meeting)
             let remaining = meeting.start.timeIntervalSince(now)
             if remaining > 0, remaining <= lead {
@@ -55,7 +56,7 @@ final class ReminderController {
         }
         prune(before: now.addingTimeInterval(-24 * 60 * 60))
 
-        let visible = store.meetings.filter { meeting in
+        let visible = meetings.filter { meeting in
             let remaining = meeting.start.timeIntervalSince(now)
             if remaining > 0 { return remaining <= lead }
             let limit = opened[Self.key(for: meeting)] != nil ? Self.openedDisplayDuration : Self.startedDisplayDuration

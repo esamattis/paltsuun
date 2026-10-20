@@ -3,7 +3,9 @@ import SwiftUI
 
 struct MenuBarContent: View {
     @Environment(MeetingStore.self) private var store
+    @Environment(CalendarSync.self) private var calendarSync
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
     @AppStorage(AppSettings.leadMinutesKey) private var leadMinutes = AppSettings.defaultLeadMinutes
     @AppStorage(AppSettings.autoOpenLinkKey) private var autoOpenLink = true
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
@@ -30,6 +32,17 @@ struct MenuBarContent: View {
 
         Button("Open Calendar…", action: showCalendar)
             .keyboardShortcut("o")
+        if calendarSync.hasConnectedSources {
+            Button(calendarSync.isSyncing ? "Syncing Calendars…" : "Sync Calendars Now") {
+                Task { await calendarSync.syncNow() }
+            }
+            .keyboardShortcut("r")
+            .disabled(calendarSync.isSyncing)
+        } else {
+            Button("Connect Google Calendar…", action: showSettings)
+        }
+
+        Divider()
 
         Picker("Remind Me", selection: $leadMinutes) {
             ForEach(AppSettings.leadMinuteChoices, id: \.self) { minutes in
@@ -44,6 +57,9 @@ struct MenuBarContent: View {
                 launchAtLogin = LaunchAtLogin.isEnabled
             }
         ))
+
+        Button("Settings…", action: showSettings)
+            .keyboardShortcut(",")
 
         Divider()
 
@@ -61,6 +77,12 @@ struct MenuBarContent: View {
     private func showCalendar() {
         NSApp.setActivationPolicy(.regular)
         openWindow(id: "main")
+        NSApp.activate()
+    }
+
+    private func showSettings() {
+        NSApp.setActivationPolicy(.regular)
+        openSettings()
         NSApp.activate()
     }
 }

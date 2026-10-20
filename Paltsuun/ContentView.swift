@@ -3,6 +3,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Environment(MeetingStore.self) private var store
+    @Environment(CalendarSync.self) private var calendarSync
     @State private var month = Date()
     @State private var selectedDate = Calendar.current.startOfDay(for: Date())
     @State private var draft: MeetingDraft?
@@ -23,13 +24,14 @@ struct ContentView: View {
                 date: selectedDate,
                 meetings: store.meetings(on: selectedDate),
                 onCreate: { newMeeting(on: selectedDate) },
+                isEditable: store.isEditable,
                 onEdit: edit,
                 onDelete: delete
             )
             .frame(width: 300)
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            if let error = store.lastError {
+            if let error = [store.lastError, calendarSync.lastError].compactMap(\.self).joined(separator: "\n").nilIfEmpty {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
                     .font(.callout)
                     .padding(8)
@@ -50,7 +52,13 @@ struct ContentView: View {
                 Button { changeMonth(by: 1) } label: { Image(systemName: "chevron.right") }
                     .help("Next month")
             }
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItemGroup(placement: .primaryAction) {
+                if calendarSync.hasConnectedSources {
+                    Button { Task { await calendarSync.syncNow() } } label: { Image(systemName: "arrow.clockwise") }
+                        .keyboardShortcut("r")
+                        .help("Sync calendars")
+                        .disabled(calendarSync.isSyncing)
+                }
                 Button { newMeeting(on: selectedDate) } label: { Image(systemName: "plus") }
                     .keyboardShortcut("n")
                     .help("New meeting")
@@ -74,7 +82,9 @@ struct ContentView: View {
 
     private func updateDisplayedRange() {
         let days = calendar.monthGrid(for: month)
-        store.setDisplayedRange(DateInterval(start: days.first!, end: calendar.date(byAdding: .day, value: 1, to: days.last!)!))
+        let range = DateInterval(start: days.first!, end: calendar.date(byAdding: .day, value: 1, to: days.last!)!)
+        store.setDisplayedRange(range)
+        calendarSync.setDisplayedRange(range)
     }
 
     private func newMeeting(on day: Date) {
@@ -120,4 +130,8 @@ private struct HideToTrayOnMinimize: NSViewRepresentable {
             window?.performClose(nil)
         }
     }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }

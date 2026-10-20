@@ -15,12 +15,19 @@ struct PaltsuunApp: App {
         Window("Paltsuun", id: "main") {
             ContentView()
                 .environment(appDelegate.store)
+                .environment(appDelegate.calendarSync)
         }
         .defaultSize(width: 1100, height: 720)
+
+        Settings {
+            SettingsView()
+                .environment(appDelegate.calendarSync)
+        }
 
         MenuBarExtra {
             MenuBarContent()
                 .environment(appDelegate.store)
+                .environment(appDelegate.calendarSync)
         } label: {
             MenuBarLabel(reminders: appDelegate.reminders)
         }

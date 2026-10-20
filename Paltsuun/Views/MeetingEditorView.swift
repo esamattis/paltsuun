@@ -43,6 +43,11 @@ struct MeetingEditorView: View {
                         .font(.caption)
                         .foregroundStyle(.red)
                 }
+                if !isEditable, let provider = store.providerName(for: meeting) {
+                    Text("This meeting is from \(provider) and can only be changed there.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 if let errorMessage {
                     Text(errorMessage)
                         .font(.caption)

@@ -2,17 +2,21 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let store: MeetingStore
+    let calendarSync: CalendarSync
     let reminders: ReminderController
 
     override init() {
         AppSettings.registerDefaults()
-        store = MeetingStore(providers: [LocalCalendarProvider()])
+        let google = SyncedCalendarProvider(source: GoogleCalendarSource())
+        store = MeetingStore(providers: [LocalCalendarProvider(), google])
+        calendarSync = CalendarSync(providers: [google], store: store)
         reminders = ReminderController(store: store)
         super.init()
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         store.startPolling()
+        calendarSync.start()
         reminders.start()
 
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { _ in

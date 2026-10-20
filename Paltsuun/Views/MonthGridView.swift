@@ -85,13 +85,15 @@ private struct MeetingChip: View {
             Text(meeting.start.formatted(date: .omitted, time: .shortened))
                 .foregroundStyle(.secondary)
             Text(meeting.title.isEmpty ? "Untitled" : meeting.title)
+                .strikethrough(meeting.isDeclined)
         }
         .font(.caption)
         .lineLimit(1)
         .padding(.horizontal, 4)
         .padding(.vertical, 1)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.accentColor.opacity(0.18), in: RoundedRectangle(cornerRadius: 4))
+        .background(meeting.isDeclined ? Color.secondary.opacity(0.12) : Color.accentColor.opacity(0.18), in: RoundedRectangle(cornerRadius: 4))
+        .opacity(meeting.isDeclined ? 0.6 : 1)
         .contentShape(Rectangle())
         .help(meeting.title)
     }
