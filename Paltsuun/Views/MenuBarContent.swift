@@ -79,13 +79,29 @@ struct MenuBarContent: View {
 
 struct MenuBarLabel: View {
     let reminders: ReminderController
+    @Environment(\.openSettings) private var openSettings
+    private static var didLaunch = false
 
     var body: some View {
-        if let meeting = reminders.current {
-            Text(Countdown.string(for: meeting.start.timeIntervalSince(reminders.now)))
-                .monospacedDigit()
-        } else {
-            Image(systemName: "calendar.badge.clock")
+        Group {
+            if let meeting = reminders.current {
+                Text(Countdown.string(for: meeting.start.timeIntervalSince(reminders.now)))
+                    .monospacedDigit()
+            } else {
+                Image(systemName: "calendar.badge.clock")
+            }
         }
+        .onAppear(perform: openSettingsIfUnconfigured)
+    }
+
+    /// The label is the only view shown at launch, so it opens Settings when Google Calendar
+    /// hasn't been set up yet.
+    private func openSettingsIfUnconfigured() {
+        guard !Self.didLaunch else { return }
+        Self.didLaunch = true
+        guard !GoogleCalendarSource.hasClientID else { return }
+        NSApp.setActivationPolicy(.regular)
+        openSettings()
+        NSApp.activate()
     }
 }

@@ -59,8 +59,17 @@ final class GoogleCalendarSource: RemoteCalendarSource {
         accountName = UserDefaults.standard.string(forKey: Self.accountNameKey)
     }
 
+    /// Whether the user has entered their OAuth client in Settings.
+    static var hasClientID: Bool {
+        !storedClientID.isEmpty
+    }
+
+    private static var storedClientID: String {
+        UserDefaults.standard.string(forKey: clientIDKey)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
     private var clientID: String {
-        UserDefaults.standard.string(forKey: Self.clientIDKey)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        Self.storedClientID
     }
 
     private var clientSecret: String {

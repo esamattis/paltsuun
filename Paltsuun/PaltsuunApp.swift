@@ -19,6 +19,9 @@ struct PaltsuunApp: App {
                 .environment(appDelegate.reminders)
         }
         .defaultSize(width: 1100, height: 720)
+        // Start hidden in the menu bar. The calendar is opened from the menu bar menu.
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
 
         Settings {
             SettingsView()

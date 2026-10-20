@@ -24,9 +24,10 @@ default browser.
   or any URL) opens automatically.
 - **Start sound.** A sound plays when a meeting starts. You can pick the sound, or turn
   it off, in *Settings…*.
-- **Lives in the menu bar.** The menu bar icon lists upcoming meetings and shows the
-  remaining time while a countdown is running. Closing or minimizing the calendar
-  window hides the app from the Dock.
+- **Lives in the menu bar.** Paltsuun starts hidden in the menu bar. If Google Calendar
+  credentials haven't been entered yet, it opens *Settings* instead. The menu
+  bar icon lists upcoming meetings and shows the remaining time while a countdown is
+  running. Closing or minimizing the calendar window hides the app from the Dock.
 - **Calendar view.** A month view for adding, editing and deleting meetings.
   Double-click a day to add a meeting, click a meeting to edit it, or right-click it
   for more actions.
