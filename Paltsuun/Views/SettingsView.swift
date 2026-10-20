@@ -6,14 +6,58 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            GeneralSection()
             ForEach(calendarSync.providers, id: \.id) { provider in
                 SyncedCalendarSection(provider: provider)
             }
         }
         .formStyle(.grouped)
+        // The window is sized to fit the form, so the scroller is never needed.
+        .scrollIndicators(.never)
+        .scrollBounceBehavior(.basedOnSize)
         .frame(width: 520)
         .fixedSize(horizontal: false, vertical: true)
         .onAppear { NSApp.setActivationPolicy(.regular) }
+    }
+}
+
+private struct GeneralSection: View {
+    @AppStorage(AppSettings.leadMinutesKey) private var leadMinutes = AppSettings.defaultLeadMinutes
+    @AppStorage(AppSettings.autoOpenLinkKey) private var autoOpenLink = true
+    @AppStorage(AppSettings.startSoundKey) private var startSound = AppSettings.defaultStartSound
+    @State private var launchAtLogin = LaunchAtLogin.isEnabled
+
+    var body: some View {
+        Section("General") {
+            Picker("Remind me", selection: $leadMinutes) {
+                ForEach(AppSettings.leadMinuteChoices, id: \.self) { minutes in
+                    Text("\(minutes) min before").tag(minutes)
+                }
+            }
+            Toggle("Open link when meeting starts", isOn: $autoOpenLink)
+            LabeledContent("Sound when meeting starts") {
+                HStack {
+                    Picker("Sound when meeting starts", selection: $startSound) {
+                        Text("None").tag("")
+                        Divider()
+                        ForEach(AppSettings.startSoundChoices, id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                    Button("Test") { AppSettings.playStartSound(named: startSound) }
+                        .disabled(startSound.isEmpty)
+                }
+            }
+            Toggle("Start at login", isOn: Binding(
+                get: { launchAtLogin },
+                set: { enabled in
+                    LaunchAtLogin.setEnabled(enabled)
+                    launchAtLogin = LaunchAtLogin.isEnabled
+                }
+            ))
+        }
     }
 }
 

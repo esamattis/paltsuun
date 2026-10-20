@@ -7,9 +7,6 @@ struct MenuBarContent: View {
     @Environment(ReminderController.self) private var reminders
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings
-    @AppStorage(AppSettings.leadMinutesKey) private var leadMinutes = AppSettings.defaultLeadMinutes
-    @AppStorage(AppSettings.autoOpenLinkKey) private var autoOpenLink = true
-    @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
         let upcoming = store.upcomingMeetings(limit: 6)
@@ -50,20 +47,6 @@ struct MenuBarContent: View {
         }
 
         Divider()
-
-        Picker("Remind Me", selection: $leadMinutes) {
-            ForEach(AppSettings.leadMinuteChoices, id: \.self) { minutes in
-                Text("\(minutes) min before").tag(minutes)
-            }
-        }
-        Toggle("Open Link When Meeting Starts", isOn: $autoOpenLink)
-        Toggle("Start at Login", isOn: Binding(
-            get: { launchAtLogin },
-            set: { enabled in
-                LaunchAtLogin.setEnabled(enabled)
-                launchAtLogin = LaunchAtLogin.isEnabled
-            }
-        ))
 
         Button("Settings…", action: showSettings)
             .keyboardShortcut(",")

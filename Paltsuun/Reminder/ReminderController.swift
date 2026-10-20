@@ -71,19 +71,24 @@ final class ReminderController {
         let lead = leadTime
         let meetings = store.meetings.filter { !$0.isDeclined && dismissed[Self.key(for: $0)] == nil }
 
+        var started = false
         for meeting in meetings {
             let key = Self.key(for: meeting)
             let remaining = meeting.start.timeIntervalSince(now)
             if remaining > 0, remaining <= lead || shown[key] != nil {
                 armed[key] = meeting.start
             } else if remaining <= 0, armed.removeValue(forKey: key) != nil,
-                      -remaining < Self.startedDisplayDuration,
-                      AppSettings.autoOpenLink, let url = meeting.url
+                      -remaining < Self.startedDisplayDuration
             {
-                opened[key] = meeting.start
-                NSWorkspace.shared.open(url)
+                started = true
+                if AppSettings.autoOpenLink, let url = meeting.url {
+                    opened[key] = meeting.start
+                    NSWorkspace.shared.open(url)
+                }
             }
         }
+        // Once, even when several meetings start together.
+        if started { AppSettings.playStartSound() }
         prune(before: now.addingTimeInterval(-24 * 60 * 60))
 
         let visible = meetings.filter { meeting in

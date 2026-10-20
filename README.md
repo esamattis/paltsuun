@@ -22,6 +22,8 @@ default browser.
   red as the start time approaches. It flashes during the last 10 seconds.
 - **Auto-join.** When the countdown ends, the meeting link (Google Meet, Zoom, Teams,
   or any URL) opens automatically.
+- **Start sound.** A sound plays when a meeting starts. You can pick the sound, or turn
+  it off, in *Settings…*.
 - **Lives in the menu bar.** The menu bar icon lists upcoming meetings and shows the
   remaining time while a countdown is running. Closing or minimizing the calendar
   window hides the app from the Dock.
@@ -34,13 +36,15 @@ default browser.
 
 ## Settings
 
-These settings are in the menu bar menu. Calendar accounts are in *Settings…*.
+These settings are in *Settings…* in the menu bar menu, together with calendar accounts.
+The *Test* button next to the sound plays the selected sound.
 
-| Setting                       | Default             |
-| ----------------------------- | ------------------- |
-| Remind Me                     | 5 min before        |
-| Open Link When Meeting Starts | On                  |
-| Start at Login                | Off                 |
+| Setting                       | Default      |
+| ----------------------------- | ------------ |
+| Remind me                     | 5 min before |
+| Open link when meeting starts | On           |
+| Sound when meeting starts     | Glass        |
+| Start at login                | Off          |
 
 ## Calendar providers
 
