@@ -113,6 +113,15 @@ command line:
 xcodebuild -project Paltsuun.xcodeproj -scheme Paltsuun build
 ```
 
+To build a Release version and install it to `/Applications`, run:
+
+```sh
+./install.sh
+```
+
+If Paltsuun is running, the script quits it before replacing it and opens the new
+version afterwards.
+
 ## Project layout
 
 ```
