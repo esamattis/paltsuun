@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Borderless panel floating above all windows and spaces, showing one meeting's countdown.
 /// It can be dragged anywhere. The place the user drags a countdown to is where the next
-/// countdown appears.
+/// countdown appears. Countdowns shown together are placed side by side in a row.
 final class ReminderPanel: NSPanel, NSWindowDelegate {
     /// Top-left corner of the last countdown the user dragged.
     private static let positionKey = "reminderPanelTopLeft"
@@ -38,31 +38,49 @@ final class ReminderPanel: NSPanel, NSWindowDelegate {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
-    /// Moves the panel to the saved position, or below or beside it when that would overlap
-    /// one of the `occupied` frames.
+    /// Moves the panel to the saved position, or beside it in the same row when that would
+    /// overlap one of the `occupied` frames. A new row is started below only when the row is full.
     func place(avoiding occupied: [NSRect]) {
         let anchor = self.anchor
         let size = frame.size
         let screen = (NSScreen.screens.first { $0.visibleFrame.insetBy(dx: -1, dy: -1).contains(anchor) } ?? NSScreen.main)?
             .visibleFrame ?? .infinite
-        let step = size.width + Self.spacing
-        let columns = [0, 1, -1, 2, -2, 3, -3, 4, -4]
-            .map { anchor.x + CGFloat($0) * step }
-            .filter { $0 == anchor.x || ($0 >= screen.minX && $0 + size.width <= screen.maxX) }
 
-        for x in columns {
-            var candidate = NSRect(x: x, y: anchor.y - size.height, width: size.width, height: size.height)
-            // Each step moves the candidate below the panel it overlaps, so this ends.
-            while candidate.minY >= screen.minY {
-                let padded = candidate.insetBy(dx: -Self.spacing / 2, dy: -Self.spacing / 2)
-                guard let blocking = occupied.first(where: { $0.intersects(padded) }) else {
-                    return move(to: candidate.origin)
-                }
-                candidate.origin.y = blocking.minY - Self.spacing - size.height
+        var top = anchor.y
+        while top - size.height >= screen.minY {
+            let row = NSRect(x: screen.minX, y: top - size.height, width: screen.width, height: size.height)
+                .insetBy(dx: 0, dy: -Self.spacing / 2)
+            let inRow = occupied.filter { $0.intersects(row) }
+            if let x = Self.freeX(in: inRow, from: anchor.x, width: size.width, screen: screen) {
+                return move(to: NSPoint(x: x, y: top - size.height))
             }
+            // Each row starts below the lowest panel of the one above, so this ends.
+            top = inRow.map(\.minY).min()! - Self.spacing
         }
         // The screen is full.
         move(to: NSPoint(x: anchor.x, y: anchor.y - size.height))
+    }
+
+    /// A free spot in a row holding the `occupied` frames: at `anchorX`, else the nearest one
+    /// to its right, else to its left.
+    private static func freeX(in occupied: [NSRect], from anchorX: CGFloat, width: CGFloat, screen: NSRect) -> CGFloat? {
+        func blocking(_ x: CGFloat) -> NSRect? {
+            let candidate = NSRect(x: x, y: 0, width: width, height: 1).insetBy(dx: -spacing / 2, dy: 0)
+            return occupied.first { $0.minX < candidate.maxX && $0.maxX > candidate.minX }
+        }
+        guard blocking(anchorX) != nil else { return anchorX }
+        // Each step moves past the panel in the way, so these end.
+        var x = anchorX
+        while x + width <= screen.maxX {
+            guard let panel = blocking(x) else { return x }
+            x = panel.maxX + spacing
+        }
+        x = anchorX
+        while x >= screen.minX {
+            guard let panel = blocking(x) else { return x }
+            x = panel.minX - spacing - width
+        }
+        return nil
     }
 
     /// Fades the panel out and closes it.
