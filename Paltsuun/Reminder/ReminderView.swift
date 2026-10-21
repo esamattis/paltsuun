@@ -18,6 +18,23 @@ struct ReminderView: View {
     }
 }
 
+/// A small countdown in the overview of today's meetings.
+struct OverviewView: View {
+    let controller: ReminderController
+    /// The reminder key of the meeting this view counts down to.
+    let key: String
+
+    var body: some View {
+        if let meeting = controller.overview[key] {
+            OverviewCard(
+                meeting: meeting,
+                remaining: meeting.start.timeIntervalSince(controller.now),
+                onDismiss: { controller.dismissFromOverview(meeting) }
+            )
+        }
+    }
+}
+
 struct ReminderCard: View {
     let meeting: Meeting
     let remaining: TimeInterval
@@ -29,12 +46,6 @@ struct ReminderCard: View {
     /// Alternate between two shades every second during the last 10 seconds.
     private var isFlashing: Bool { remaining > 0 && remaining <= 10 && seconds % 2 == 0 }
 
-    private var subtitle: String {
-        let time = meeting.start.formatted(date: .omitted, time: .shortened)
-        guard let host = meeting.url?.host() else { return time }
-        return "\(time) · \(host)"
-    }
-
     var body: some View {
         VStack(spacing: 4) {
             Text(Countdown.string(for: remaining))
@@ -42,12 +53,12 @@ struct ReminderCard: View {
                 .monospacedDigit()
                 .contentTransition(.numericText(countsDown: true))
 
-            Text(meeting.title.isEmpty ? "Untitled meeting" : meeting.title)
+            Text(meeting.displayTitle)
                 .font(.title3.weight(.semibold))
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
 
-            Text(subtitle)
+            Text(meeting.reminderSubtitle)
                 .font(.callout)
                 .opacity(0.8)
                 .lineLimit(1)
@@ -63,34 +74,86 @@ struct ReminderCard: View {
             .disabled(meeting.url == nil)
             .padding(.top, 10)
         }
-        .foregroundStyle(.white)
         .padding(20)
         .frame(width: 320)
-        .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Urgency.color(remaining: remaining, leadTime: leadTime, flashing: isFlashing).gradient)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(.white.opacity(0.2), lineWidth: 1)
-        }
-        .overlay(alignment: .topTrailing) {
-            if let onDismiss {
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 9, weight: .bold))
-                        .frame(width: 18, height: 18)
-                        .background(.white.opacity(0.18), in: Circle())
-                        .contentShape(Circle())
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(.white.opacity(0.85))
-                .focusEffectDisabled()
-                .help("Dismiss")
-                .padding(10)
-            }
-        }
+        .card(color: Urgency.color(remaining: remaining, leadTime: leadTime, flashing: isFlashing), cornerRadius: 22, onDismiss: onDismiss)
         .animation(.easeInOut(duration: 0.4), value: seconds)
+    }
+}
+
+/// A smaller countdown in a calm color, without the join button.
+struct OverviewCard: View {
+    static let color = Color(red: 0.25, green: 0.33, blue: 0.44)
+
+    let meeting: Meeting
+    let remaining: TimeInterval
+    var onDismiss: (() -> Void)?
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(Countdown.string(for: remaining))
+                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .contentTransition(.numericText(countsDown: true))
+
+            Text(meeting.displayTitle)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+
+            Text(meeting.reminderSubtitle)
+                .font(.caption)
+                .opacity(0.8)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 12)
+        .frame(width: 240)
+        .card(color: Self.color, cornerRadius: 16, onDismiss: onDismiss)
+        .animation(.easeInOut(duration: 0.4), value: Int(remaining.rounded(.up)))
+    }
+}
+
+private extension Meeting {
+    var displayTitle: String {
+        title.isEmpty ? "Untitled meeting" : title
+    }
+
+    var reminderSubtitle: String {
+        let time = start.formatted(date: .omitted, time: .shortened)
+        guard let host = url?.host() else { return time }
+        return "\(time) · \(host)"
+    }
+}
+
+private extension View {
+    /// White content on a rounded card of `color`, with a dismiss button in the corner.
+    func card(color: Color, cornerRadius: CGFloat, onDismiss: (() -> Void)?) -> some View {
+        foregroundStyle(.white)
+            .background {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(color.gradient)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+            }
+            .overlay(alignment: .topTrailing) {
+                if let onDismiss {
+                    Button(action: onDismiss) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 9, weight: .bold))
+                            .frame(width: 18, height: 18)
+                            .background(.white.opacity(0.18), in: Circle())
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white.opacity(0.85))
+                    .focusEffectDisabled()
+                    .help("Dismiss")
+                    .padding(cornerRadius / 2 - 1)
+                }
+            }
     }
 }
 
@@ -150,6 +213,7 @@ enum Urgency {
         ReminderCard(meeting: meeting, remaining: 280, leadTime: 300)
         ReminderCard(meeting: meeting, remaining: 120, leadTime: 300)
         ReminderCard(meeting: meeting, remaining: 20, leadTime: 300)
+        OverviewCard(meeting: meeting, remaining: 2 * 60 * 60 + 75)
     }
     .padding()
 }

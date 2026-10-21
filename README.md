@@ -17,6 +17,9 @@ default browser.
 - **Auto-join.** Opens the meeting link (Google Meet, Zoom, Teams or any URL) when the
   countdown ends.
 - **Start sound** when a meeting starts.
+- **Today's meetings at a glance.** When you come back to the computer after being away,
+  and when Paltsuun starts, small countdowns to the rest of today's meetings are shown
+  for a few seconds.
 - **Menu bar app** that lists upcoming meetings.
 - **Calendar view** for adding and editing meetings.
 - **Google Calendar sync.** Declined meetings never remind you.
@@ -26,12 +29,13 @@ default browser.
 These settings are in *Settings…* in the menu bar menu, together with calendar accounts.
 The *Test* button next to the sound plays the selected sound.
 
-| Setting                       | Default      |
-| ----------------------------- | ------------ |
-| Remind me                     | 5 min before |
-| Open link when meeting starts | On           |
-| Sound when meeting starts     | Glass        |
-| Start at login                | Off          |
+| Setting                               | Default      |
+| ------------------------------------- | ------------ |
+| Remind me                             | 5 min before |
+| Open link when meeting starts         | On           |
+| Sound when meeting starts             | Glass        |
+| Show today's meetings when back after | 30 min       |
+| Start at login                        | Off          |
 
 ## Calendar providers
 

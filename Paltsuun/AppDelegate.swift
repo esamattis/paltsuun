@@ -4,13 +4,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let store: MeetingStore
     let calendarSync: CalendarSync
     let reminders: ReminderController
+    let activityMonitor: ActivityMonitor
 
     override init() {
         AppSettings.registerDefaults()
         let google = SyncedCalendarProvider(source: GoogleCalendarSource())
         store = MeetingStore(providers: [LocalCalendarProvider(), google])
         calendarSync = CalendarSync(providers: [google], store: store)
-        reminders = ReminderController(store: store)
+        let reminders = ReminderController(store: store)
+        self.reminders = reminders
+        activityMonitor = ActivityMonitor { reminders.showToday() }
         super.init()
     }
 
@@ -18,6 +21,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.startPolling()
         calendarSync.start()
         reminders.start()
+        activityMonitor.start()
+        if AppSettings.awayTime != nil {
+            reminders.showToday()
+        }
 
         NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { _ in
             // The closing window is still visible here, so check on the next run loop pass.

@@ -25,6 +25,7 @@ private struct GeneralSection: View {
     @AppStorage(AppSettings.leadMinutesKey) private var leadMinutes = AppSettings.defaultLeadMinutes
     @AppStorage(AppSettings.autoOpenLinkKey) private var autoOpenLink = true
     @AppStorage(AppSettings.startSoundKey) private var startSound = AppSettings.defaultStartSound
+    @AppStorage(AppSettings.awayMinutesKey) private var awayMinutes = AppSettings.defaultAwayMinutes
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
@@ -50,6 +51,16 @@ private struct GeneralSection: View {
                         .disabled(startSound.isEmpty)
                 }
             }
+            Picker(selection: $awayMinutes) {
+                Text("Never").tag(0)
+                Divider()
+                ForEach(AppSettings.awayMinuteChoices, id: \.self) { minutes in
+                    Text(Self.format(minutes: minutes)).tag(minutes)
+                }
+            } label: {
+                Text("Show today's meetings when back after")
+                Text("Also shown briefly when Paltsuun starts.")
+            }
             Toggle("Start at login", isOn: Binding(
                 get: { launchAtLogin },
                 set: { enabled in
@@ -58,6 +69,10 @@ private struct GeneralSection: View {
                 }
             ))
         }
+    }
+
+    private static func format(minutes: Int) -> String {
+        minutes < 60 ? "\(minutes) min" : minutes == 60 ? "1 hour" : "\(minutes / 60) hours"
     }
 }
 

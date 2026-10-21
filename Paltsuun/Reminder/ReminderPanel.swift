@@ -65,6 +65,17 @@ final class ReminderPanel: NSPanel, NSWindowDelegate {
         move(to: NSPoint(x: anchor.x, y: anchor.y - size.height))
     }
 
+    /// Fades the panel out and closes it.
+    func fadeOut() {
+        ignoresMouseEvents = true
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.5
+            animator().alphaValue = 0
+        } completionHandler: {
+            MainActor.assumeIsolated { self.close() }
+        }
+    }
+
     func windowDidMove(_ notification: Notification) {
         guard frame.origin != placedOrigin else { return }
         placedOrigin = nil

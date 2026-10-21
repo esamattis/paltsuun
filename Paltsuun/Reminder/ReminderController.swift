@@ -1,5 +1,6 @@
 import AppKit
 import Observation
+import SwiftUI
 
 /// Watches the store and shows a floating countdown for each meeting that is about to start.
 @Observable
@@ -8,10 +9,15 @@ final class ReminderController {
     static let startedDisplayDuration: TimeInterval = 30
     /// How long a started meeting stays on screen after its link was opened automatically.
     static let openedDisplayDuration: TimeInterval = 5
+    /// How long the overview of today's meetings stays on screen.
+    static let overviewDisplayDuration: TimeInterval = 10
 
     private(set) var now = Date()
     /// Meetings with a countdown on screen, by reminder key.
     private(set) var reminders: [String: Meeting] = [:]
+    /// The rest of today's meetings while their overview is on screen, by reminder key.
+    /// Meetings that have a countdown in `reminders` are left out.
+    private(set) var overview: [String: Meeting] = [:]
     /// The meeting starting closest to now, shown in the menu bar.
     private(set) var current: Meeting?
 
@@ -24,6 +30,9 @@ final class ReminderController {
     @ObservationIgnored private var dismissed: [String: Date] = [:]
     /// Meetings whose countdown was shown manually, before the lead time.
     @ObservationIgnored private var shown: [String: Date] = [:]
+    @ObservationIgnored private var overviewPanels: [String: ReminderPanel] = [:]
+    @ObservationIgnored private var overviewUntil: Date?
+    @ObservationIgnored private var overviewDismissed: Set<String> = []
 
     init(store: MeetingStore) {
         self.store = store
@@ -65,6 +74,19 @@ final class ReminderController {
         tick()
     }
 
+    /// Briefly shows small countdowns for the rest of today's meetings.
+    func showToday() {
+        overviewUntil = Date().addingTimeInterval(Self.overviewDisplayDuration)
+        overviewDismissed = []
+        tick()
+    }
+
+    /// Hides the meeting from the overview of today's meetings. It still reminds as usual.
+    func dismissFromOverview(_ meeting: Meeting) {
+        overviewDismissed.insert(Self.key(for: meeting))
+        tick()
+    }
+
     private func tick() {
         let now = Date()
         self.now = now
@@ -102,6 +124,19 @@ final class ReminderController {
         let next = visible.min { abs($0.start.timeIntervalSince(now)) < abs($1.start.timeIntervalSince(now)) }
         if current != next { current = next }
 
+        var overview: [String: Meeting] = [:]
+        if let overviewUntil, now < overviewUntil {
+            let calendar = Calendar.current
+            let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
+            for meeting in meetings where meeting.start > now && meeting.start < endOfDay {
+                let key = Self.key(for: meeting)
+                if reminders[key] == nil, !overviewDismissed.contains(key) { overview[key] = meeting }
+            }
+        } else {
+            overviewUntil = nil
+        }
+        if self.overview != overview { self.overview = overview }
+
         updatePanels()
     }
 
@@ -111,14 +146,30 @@ final class ReminderController {
             panel.close()
             panels[key] = nil
         }
-        // Earliest first, so countdowns appearing together are stacked in start order.
-        let new = reminders.filter { panels[$0.key] == nil }.sorted { ($0.value.start, $0.key) < ($1.value.start, $1.key) }
-        for (key, _) in new {
-            let panel = ReminderPanel(rootView: ReminderView(controller: self, key: key))
-            panel.place(avoiding: panels.values.map(\.frame))
-            panel.orderFrontRegardless()
-            panels[key] = panel
+        for (key, panel) in overviewPanels where overview[key] == nil {
+            panel.fadeOut()
+            overviewPanels[key] = nil
         }
+        for key in Self.keysWithoutPanel(reminders, panels) {
+            panels[key] = present(ReminderView(controller: self, key: key))
+        }
+        for key in Self.keysWithoutPanel(overview, overviewPanels) {
+            overviewPanels[key] = present(OverviewView(controller: self, key: key))
+        }
+    }
+
+    private func present(_ view: some View) -> ReminderPanel {
+        let panel = ReminderPanel(rootView: view)
+        panel.place(avoiding: (Array(panels.values) + Array(overviewPanels.values)).map(\.frame))
+        panel.orderFrontRegardless()
+        return panel
+    }
+
+    /// Earliest first, so countdowns appearing together are stacked in start order.
+    private static func keysWithoutPanel(_ meetings: [String: Meeting], _ panels: [String: ReminderPanel]) -> [String] {
+        meetings.filter { panels[$0.key] == nil }
+            .sorted { ($0.value.start, $0.key) < ($1.value.start, $1.key) }
+            .map(\.key)
     }
 
     private func prune(before date: Date) {
