@@ -35,6 +35,7 @@ The *Test* button next to the sound plays the selected sound.
 | Open link when meeting starts         | On           |
 | Sound when meeting starts             | Glass        |
 | Show today's meetings when back after | 30 min       |
+| Show today's meetings for             | 10 s         |
 | Start at login                        | Off          |
 
 ## Calendar providers

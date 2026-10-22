@@ -5,6 +5,7 @@ enum AppSettings {
     static let autoOpenLinkKey = "autoOpenMeetingLink"
     static let startSoundKey = "meetingStartSound"
     static let awayMinutesKey = "todayOverviewAwayMinutes"
+    static let overviewSecondsKey = "todayOverviewSeconds"
 
     static let defaultLeadMinutes = 5
     static let leadMinuteChoices = [1, 2, 3, 5, 10, 15]
@@ -12,6 +13,8 @@ enum AppSettings {
     static let defaultAwayMinutes = 30
     /// 0 means today's meetings are never shown.
     static let awayMinuteChoices = [15, 30, 60, 120]
+    static let defaultOverviewSeconds = 10
+    static let overviewSecondChoices = [5, 10, 15, 30, 60]
     /// macOS system sounds. An empty name means no sound.
     static let startSoundChoices = [
         "Basso", "Blow", "Bottle", "Frog", "Funk", "Glass", "Hero",
@@ -24,6 +27,7 @@ enum AppSettings {
             autoOpenLinkKey: true,
             startSoundKey: defaultStartSound,
             awayMinutesKey: defaultAwayMinutes,
+            overviewSecondsKey: defaultOverviewSeconds,
         ])
     }
 
@@ -41,6 +45,11 @@ enum AppSettings {
     static var awayTime: TimeInterval? {
         let minutes = UserDefaults.standard.integer(forKey: awayMinutesKey)
         return minutes > 0 ? TimeInterval(minutes * 60) : nil
+    }
+
+    /// How long today's meetings stay on screen.
+    static var overviewDuration: TimeInterval {
+        TimeInterval(max(1, UserDefaults.standard.integer(forKey: overviewSecondsKey)))
     }
 
     /// Sound played when a meeting starts, or empty for none.

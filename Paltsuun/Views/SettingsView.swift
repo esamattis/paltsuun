@@ -26,6 +26,7 @@ private struct GeneralSection: View {
     @AppStorage(AppSettings.autoOpenLinkKey) private var autoOpenLink = true
     @AppStorage(AppSettings.startSoundKey) private var startSound = AppSettings.defaultStartSound
     @AppStorage(AppSettings.awayMinutesKey) private var awayMinutes = AppSettings.defaultAwayMinutes
+    @AppStorage(AppSettings.overviewSecondsKey) private var overviewSeconds = AppSettings.defaultOverviewSeconds
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
@@ -61,6 +62,12 @@ private struct GeneralSection: View {
                 Text("Show today's meetings when back after")
                 Text("Also shown briefly when Paltsuun starts.")
             }
+            Picker("Show today's meetings for", selection: $overviewSeconds) {
+                ForEach(AppSettings.overviewSecondChoices, id: \.self) { seconds in
+                    Text("\(seconds) s").tag(seconds)
+                }
+            }
+            .disabled(awayMinutes == 0)
             Toggle("Start at login", isOn: Binding(
                 get: { launchAtLogin },
                 set: { enabled in

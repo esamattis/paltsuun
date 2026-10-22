@@ -9,8 +9,6 @@ final class ReminderController {
     static let startedDisplayDuration: TimeInterval = 30
     /// How long a started meeting stays on screen after its link was opened automatically.
     static let openedDisplayDuration: TimeInterval = 5
-    /// How long the overview of today's meetings stays on screen.
-    static let overviewDisplayDuration: TimeInterval = 10
 
     private(set) var now = Date()
     /// Meetings with a countdown on screen, by reminder key.
@@ -76,7 +74,7 @@ final class ReminderController {
 
     /// Briefly shows small countdowns for the rest of today's meetings.
     func showToday() {
-        overviewUntil = Date().addingTimeInterval(Self.overviewDisplayDuration)
+        overviewUntil = Date().addingTimeInterval(AppSettings.overviewDuration)
         overviewDismissed = []
         tick()
     }
