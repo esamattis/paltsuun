@@ -11,6 +11,8 @@ final class ReminderController {
     static let openedDisplayDuration: TimeInterval = 5
     /// How long the toast about new meetings stays on screen.
     static let newMeetingsDisplayDuration: TimeInterval = 8
+    /// How long the message about meetings without a link stays on screen before it can be dismissed.
+    static let noLinkDismissDelay: TimeInterval = 3
 
     private(set) var now = Date()
     /// Meetings with a countdown on screen, by reminder key.
@@ -20,6 +22,10 @@ final class ReminderController {
     private(set) var overview: [String: Meeting] = [:]
     /// Meetings in the toast about new meetings, earliest first.
     private(set) var newMeetings: [Meeting] = []
+    /// Started meetings without a link, shown in a big message until the user dismisses it.
+    private(set) var noLinkMeetings: [Meeting] = []
+    /// When the message about meetings without a link appeared.
+    private(set) var noLinkShownAt: Date?
     /// The meeting starting closest to now, shown in the menu bar.
     private(set) var current: Meeting?
 
@@ -37,6 +43,7 @@ final class ReminderController {
     @ObservationIgnored private var overviewDismissed: Set<String> = []
     @ObservationIgnored private var newMeetingsPanel: ReminderPanel?
     @ObservationIgnored private var newMeetingsUntil: Date?
+    @ObservationIgnored private var noLinkPanel: ReminderPanel?
 
     init(store: MeetingStore) {
         self.store = store
@@ -114,6 +121,19 @@ final class ReminderController {
         tick()
     }
 
+    /// The message about meetings without a link has been on screen long enough to be dismissed.
+    var canDismissNoLink: Bool {
+        guard let noLinkShownAt else { return false }
+        return now.timeIntervalSince(noLinkShownAt) >= Self.noLinkDismissDelay
+    }
+
+    func dismissNoLink() {
+        guard canDismissNoLink else { return }
+        noLinkMeetings = []
+        noLinkShownAt = nil
+        tick()
+    }
+
     private func tick() {
         let now = Date()
         self.now = now
@@ -121,6 +141,7 @@ final class ReminderController {
         let meetings = store.meetings.filter { !$0.isDeclined && dismissed[Self.key(for: $0)] == nil }
 
         var started = false
+        var startedWithoutLink: [Meeting] = []
         for meeting in meetings {
             let key = Self.key(for: meeting)
             let remaining = meeting.start.timeIntervalSince(now)
@@ -130,14 +151,25 @@ final class ReminderController {
                       -remaining < Self.startedDisplayDuration
             {
                 started = true
-                if AppSettings.autoOpenLink, let url = meeting.url {
-                    opened[key] = meeting.start
-                    NSWorkspace.shared.open(url)
+                if let url = meeting.url {
+                    if AppSettings.autoOpenLink {
+                        opened[key] = meeting.start
+                        NSWorkspace.shared.open(url)
+                    }
+                } else {
+                    startedWithoutLink.append(meeting)
                 }
             }
         }
         // Once, even when several meetings start together.
         if started { AppSettings.playStartSound() }
+        if !startedWithoutLink.isEmpty {
+            // Replace a message already on screen, since the new one may be a different size.
+            noLinkPanel?.close()
+            noLinkPanel = nil
+            noLinkMeetings = (noLinkMeetings + startedWithoutLink).sorted { $0.start < $1.start }
+            noLinkShownAt = now
+        }
         prune(before: now.addingTimeInterval(-24 * 60 * 60))
 
         let visible = meetings.filter { meeting in
@@ -192,6 +224,18 @@ final class ReminderController {
         }
         if !newMeetings.isEmpty, newMeetingsPanel == nil {
             newMeetingsPanel = present(NewMeetingsView(controller: self))
+        }
+        if noLinkMeetings.isEmpty, let noLinkPanel {
+            noLinkPanel.fadeOut()
+            self.noLinkPanel = nil
+        } else if !noLinkMeetings.isEmpty, noLinkPanel == nil {
+            let panel = ReminderPanel(rootView: NoLinkView(controller: self))
+            panel.isMovableByWindowBackground = false
+            panel.placeInCenter()
+            // Key, so Return and Escape reach it.
+            panel.makeKeyAndOrderFront(nil)
+            panel.orderFrontRegardless()
+            noLinkPanel = panel
         }
     }
 

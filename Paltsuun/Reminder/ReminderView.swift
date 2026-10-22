@@ -46,6 +46,23 @@ struct NewMeetingsView: View {
     }
 }
 
+/// A big message about started meetings without a link, until the user dismisses it.
+struct NoLinkView: View {
+    let controller: ReminderController
+
+    var body: some View {
+        if !controller.noLinkMeetings.isEmpty {
+            NoLinkCard(
+                meetings: controller.noLinkMeetings,
+                dismissIn: controller.noLinkShownAt.map {
+                    ReminderController.noLinkDismissDelay - controller.now.timeIntervalSince($0)
+                } ?? 0,
+                onDismiss: controller.dismissNoLink
+            )
+        }
+    }
+}
+
 struct ReminderCard: View {
     let meeting: Meeting
     let remaining: TimeInterval
@@ -122,6 +139,58 @@ struct OverviewCard: View {
         .frame(width: 240)
         .card(color: Self.color, cornerRadius: 16, onDismiss: onDismiss)
         .animation(.easeInOut(duration: 0.4), value: Int(remaining.rounded(.up)))
+    }
+}
+
+/// Tells that meetings without a link have started. Its button can be used only after
+/// `dismissIn` seconds, with a click, Return or Escape.
+struct NoLinkCard: View {
+    static let color = Color(red: 0.72, green: 0.04, blue: 0.14)
+
+    let meetings: [Meeting]
+    let dismissIn: TimeInterval
+    let onDismiss: () -> Void
+
+    private var canDismiss: Bool { dismissIn <= 0 }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "person.2.fill")
+                .font(.system(size: 44))
+            Text(meetings.count == 1 ? "Meeting started" : "\(meetings.count) meetings started")
+                .font(.system(size: 44, weight: .bold, design: .rounded))
+            ForEach(meetings) { meeting in
+                Text(meeting.displayTitle)
+                    .font(.title.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+            Text(meetings.count == 1 ? "It has no meeting link." : "They have no meeting links.")
+                .font(.title3)
+                .opacity(0.8)
+
+            Button(action: onDismiss) {
+                Text(canDismiss ? "OK" : "OK (\(Int(dismissIn.rounded(.up))))")
+                    .monospacedDigit()
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(JoinButtonStyle())
+            .focusEffectDisabled()
+            .keyboardShortcut(.defaultAction)
+            .disabled(!canDismiss)
+            .frame(width: 200)
+            .padding(.top, 14)
+        }
+        .padding(36)
+        .frame(width: 560)
+        .background {
+            // Escape dismisses too.
+            Button("", action: onDismiss)
+                .keyboardShortcut(.cancelAction)
+                .disabled(!canDismiss)
+                .opacity(0)
+        }
+        .card(color: Self.color, cornerRadius: 28, onDismiss: nil)
     }
 }
 
@@ -274,6 +343,7 @@ enum Urgency {
         ReminderCard(meeting: meeting, remaining: 20, leadTime: 300)
         OverviewCard(meeting: meeting, remaining: 2 * 60 * 60 + 75)
         NewMeetingsCard(meetings: [meeting])
+        NoLinkCard(meetings: [meeting], dismissIn: 2, onDismiss: {})
     }
     .padding()
 }

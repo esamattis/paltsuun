@@ -11,6 +11,8 @@ final class ReminderPanel: NSPanel, NSWindowDelegate {
 
     /// Origin set by `place(avoiding:)`, to tell it apart from the user dragging the panel.
     private var placedOrigin: NSPoint?
+    /// Whether the place the panel is dragged to is where the next countdown appears.
+    private var savesPosition = true
 
     init<Content: View>(rootView: Content) {
         super.init(
@@ -61,6 +63,13 @@ final class ReminderPanel: NSPanel, NSWindowDelegate {
         move(to: NSPoint(x: anchor.x, y: anchor.y - size.height))
     }
 
+    /// Moves the panel to the center of the main screen. Its position is never saved.
+    func placeInCenter() {
+        savesPosition = false
+        guard let screen = NSScreen.main?.visibleFrame else { return }
+        move(to: NSPoint(x: screen.midX - frame.width / 2, y: screen.midY - frame.height / 2))
+    }
+
     /// A free spot in a row holding the `occupied` frames: at `anchorX`, else the nearest one
     /// to its right, else to its left.
     private static func freeX(in occupied: [NSRect], from anchorX: CGFloat, width: CGFloat, screen: NSRect) -> CGFloat? {
@@ -95,7 +104,7 @@ final class ReminderPanel: NSPanel, NSWindowDelegate {
     }
 
     func windowDidMove(_ notification: Notification) {
-        guard frame.origin != placedOrigin else { return }
+        guard savesPosition, frame.origin != placedOrigin else { return }
         placedOrigin = nil
         UserDefaults.standard.set(NSStringFromPoint(NSPoint(x: frame.minX, y: frame.maxY)), forKey: Self.positionKey)
     }
