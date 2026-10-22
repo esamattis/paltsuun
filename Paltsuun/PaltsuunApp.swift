@@ -31,6 +31,16 @@ struct PaltsuunApp: App {
         .defaultLaunchBehavior(.suppressed)
         .restorationBehavior(.disabled)
 
+        Window("Quick Event", id: "quick-event") {
+            QuickEventView()
+                .environment(appDelegate.store)
+        }
+        .windowResizability(.contentSize)
+        .windowLevel(.floating)
+        .defaultPosition(.center)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+
         Settings {
             SettingsView()
                 .environment(appDelegate.calendarSync)

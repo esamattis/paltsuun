@@ -72,8 +72,14 @@ final class MeetingStore {
         provider(for: meeting) is any EditableCalendarProvider
     }
 
-    func newMeeting(start: Date, duration: TimeInterval = 30 * 60) -> Meeting? {
-        guard let provider = defaultEditableProvider else { return nil }
+    /// Quick events are always stored here, never in a remote calendar.
+    var localProvider: LocalCalendarProvider? {
+        providers.lazy.compactMap { $0 as? LocalCalendarProvider }.first
+    }
+
+    /// A new meeting in `provider`, or in the default editable provider when nil.
+    func newMeeting(start: Date, duration: TimeInterval = 30 * 60, provider: (any EditableCalendarProvider)? = nil) -> Meeting? {
+        guard let provider = provider ?? defaultEditableProvider else { return nil }
         return Meeting(id: UUID().uuidString, providerID: provider.id, title: "", start: start, end: start + duration, url: nil)
     }
 

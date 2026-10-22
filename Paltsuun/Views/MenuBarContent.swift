@@ -41,6 +41,12 @@ struct MenuBarContent: View {
         }
         .keyboardShortcut("s")
         .disabled(next == nil)
+        Button("New Quick Event…") {
+            // A small floating window, so the Dock icon stays hidden.
+            openWindow(id: "quick-event")
+            NSApp.activate()
+        }
+        .keyboardShortcut("n")
         Button("Open Calendar…", action: showCalendar)
             .keyboardShortcut("o")
         if calendarSync.hasConnectedSources {

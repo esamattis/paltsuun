@@ -23,6 +23,9 @@ default browser.
 - **New meeting toast.** When a meeting is added to a synced calendar, or you're invited
   to one, a toast shows it briefly. A new repeating meeting is shown once.
 - **Menu bar app** that lists upcoming meetings.
+- **Quick events.** *New Quick Event…* in the menu bar menu adds a local meeting. Set
+  when it starts with a slider (time from now) or by entering the time. Each updates the
+  other.
 - **Sync log** of each calendar sync and the meetings it added, changed or removed.
 - **Calendar view** for adding and editing meetings.
 - **Google Calendar sync.** Declined meetings never remind you.
@@ -53,8 +56,8 @@ providers are read-only.
 `MeetingStore` fetches meetings from every provider once a minute. If a provider fails,
 its last results are kept and an error banner appears in the calendar window.
 
-`LocalCalendarProvider` stores meetings you add in the app as JSON in the app's
-sandbox container:
+`LocalCalendarProvider` stores meetings you add in the app, including quick events, as
+JSON in the app's sandbox container:
 
 ```
 ~/Library/Containers/com.esamatti.Paltsuun/Data/Library/Application Support/Paltsuun/meetings.json
@@ -149,5 +152,6 @@ Paltsuun/
     Google/                Google Calendar source
     OAuth/                 Loopback redirect receiver, PKCE, keychain
   Reminder/                Countdown logic, floating panel and its view
-  Views/                   Month grid, day agenda, meeting editor, menu bar, settings
+  Views/                   Month grid, day agenda, meeting editor, quick event,
+                           menu bar, settings
 ```
