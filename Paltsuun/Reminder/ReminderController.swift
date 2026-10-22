@@ -17,11 +17,15 @@ final class ReminderController {
     private(set) var now = Date()
     /// Meetings with a countdown on screen, by reminder key.
     private(set) var reminders: [String: Meeting] = [:]
-    /// The rest of today's meetings while their overview is on screen, by reminder key.
-    /// Meetings that have a countdown in `reminders` are left out.
+    /// Ongoing meetings and the rest of today's meetings while their overview is on screen,
+    /// by reminder key. Meetings that have a countdown in `reminders` are left out.
     private(set) var overview: [String: Meeting] = [:]
+    /// When the overview of today's meetings disappears.
+    private(set) var overviewUntil: Date?
     /// Meetings in the toast about new meetings, earliest first.
     private(set) var newMeetings: [Meeting] = []
+    /// When the toast about new meetings disappears.
+    private(set) var newMeetingsUntil: Date?
     /// Started meetings without a link, shown in a big message until the user dismisses it.
     private(set) var noLinkMeetings: [Meeting] = []
     /// When the message about meetings without a link appeared.
@@ -39,10 +43,8 @@ final class ReminderController {
     /// Meetings whose countdown was shown manually, before the lead time.
     @ObservationIgnored private var shown: [String: Date] = [:]
     @ObservationIgnored private var overviewPanels: [String: ReminderPanel] = [:]
-    @ObservationIgnored private var overviewUntil: Date?
     @ObservationIgnored private var overviewDismissed: Set<String> = []
     @ObservationIgnored private var newMeetingsPanel: ReminderPanel?
-    @ObservationIgnored private var newMeetingsUntil: Date?
     @ObservationIgnored private var noLinkPanel: ReminderPanel?
 
     init(store: MeetingStore) {
@@ -85,7 +87,7 @@ final class ReminderController {
         tick()
     }
 
-    /// Briefly shows small countdowns for the rest of today's meetings.
+    /// Briefly shows ongoing meetings and small countdowns for the rest of today's meetings.
     func showToday() {
         overviewUntil = Date().addingTimeInterval(AppSettings.overviewDuration)
         overviewDismissed = []
@@ -119,6 +121,13 @@ final class ReminderController {
     func dismissNewMeetings() {
         newMeetingsUntil = nil
         tick()
+    }
+
+    /// Seconds until the countdown of a started meeting disappears, or nil before the start.
+    func closesIn(_ meeting: Meeting) -> TimeInterval? {
+        let elapsed = now.timeIntervalSince(meeting.start)
+        guard elapsed >= 0 else { return nil }
+        return startedDisplayDuration(for: Self.key(for: meeting)) - elapsed
     }
 
     /// The message about meetings without a link has been on screen long enough to be dismissed.
@@ -175,8 +184,7 @@ final class ReminderController {
         let visible = meetings.filter { meeting in
             let remaining = meeting.start.timeIntervalSince(now)
             if remaining > 0 { return remaining <= lead || shown[Self.key(for: meeting)] != nil }
-            let limit = opened[Self.key(for: meeting)] != nil ? Self.openedDisplayDuration : Self.startedDisplayDuration
-            return -remaining < limit
+            return -remaining < startedDisplayDuration(for: Self.key(for: meeting))
         }
         let reminders = Dictionary(visible.map { (Self.key(for: $0), $0) }) { first, _ in first }
         if self.reminders != reminders { self.reminders = reminders }
@@ -187,7 +195,7 @@ final class ReminderController {
         if let overviewUntil, now < overviewUntil {
             let calendar = Calendar.current
             let endOfDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now))!
-            for meeting in meetings where meeting.start > now && meeting.start < endOfDay {
+            for meeting in meetings where meeting.end > now && meeting.start < endOfDay {
                 let key = Self.key(for: meeting)
                 if reminders[key] == nil, !overviewDismissed.contains(key) { overview[key] = meeting }
             }
@@ -252,6 +260,11 @@ final class ReminderController {
         meetings.filter { panels[$0.key] == nil }
             .sorted { ($0.value.start, $0.key) < ($1.value.start, $1.key) }
             .map(\.key)
+    }
+
+    /// How long a started meeting's countdown stays on screen.
+    private func startedDisplayDuration(for key: String) -> TimeInterval {
+        opened[key] != nil ? Self.openedDisplayDuration : Self.startedDisplayDuration
     }
 
     private func prune(before date: Date) {

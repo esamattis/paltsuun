@@ -18,10 +18,11 @@ default browser.
   countdown ends.
 - **Start sound** when a meeting starts.
 - **Today's meetings at a glance.** When you come back to the computer after being away,
-  and when Paltsuun starts, small countdowns to the rest of today's meetings are shown
-  for a few seconds.
+  and when Paltsuun starts, meetings already in progress (with a *Join meeting* button)
+  and small countdowns to the rest of today's meetings are shown for a few seconds.
 - **New meeting toast.** When a meeting is added to a synced calendar, or you're invited
   to one, a toast shows it briefly. A new repeating meeting is shown once.
+- Toasts that disappear by themselves show the seconds left next to their close button.
 - **Menu bar app** that lists upcoming meetings.
 - **Quick events.** *New Quick Event…* in the menu bar menu adds a local meeting. Set
   when it starts with a slider (time from now) or by entering the time. Each updates the
