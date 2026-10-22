@@ -39,6 +39,8 @@ final class ReminderController {
     /// Meetings seen counting down, so the link is opened only when we witness the start.
     @ObservationIgnored private var armed: [String: Date] = [:]
     @ObservationIgnored private var opened: [String: Date] = [:]
+    /// Started meetings without a link, whose countdown gave way to the big message.
+    @ObservationIgnored private var startedWithoutLink: [String: Date] = [:]
     @ObservationIgnored private var dismissed: [String: Date] = [:]
     /// Meetings whose countdown was shown manually, before the lead time.
     @ObservationIgnored private var shown: [String: Date] = [:]
@@ -166,6 +168,7 @@ final class ReminderController {
                         NSWorkspace.shared.open(url)
                     }
                 } else {
+                    self.startedWithoutLink[key] = meeting.start
                     startedWithoutLink.append(meeting)
                 }
             }
@@ -264,12 +267,14 @@ final class ReminderController {
 
     /// How long a started meeting's countdown stays on screen.
     private func startedDisplayDuration(for key: String) -> TimeInterval {
-        opened[key] != nil ? Self.openedDisplayDuration : Self.startedDisplayDuration
+        if startedWithoutLink[key] != nil { return 0 }
+        return opened[key] != nil ? Self.openedDisplayDuration : Self.startedDisplayDuration
     }
 
     private func prune(before date: Date) {
         armed = armed.filter { $0.value >= date }
         opened = opened.filter { $0.value >= date }
+        startedWithoutLink = startedWithoutLink.filter { $0.value >= date }
         dismissed = dismissed.filter { $0.value >= date }
         shown = shown.filter { $0.value >= date }
     }
