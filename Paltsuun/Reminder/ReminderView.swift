@@ -35,6 +35,17 @@ struct OverviewView: View {
     }
 }
 
+/// A toast about meetings added to a calendar since the previous sync.
+struct NewMeetingsView: View {
+    let controller: ReminderController
+
+    var body: some View {
+        if !controller.newMeetings.isEmpty {
+            NewMeetingsCard(meetings: controller.newMeetings, onDismiss: controller.dismissNewMeetings)
+        }
+    }
+}
+
 struct ReminderCard: View {
     let meeting: Meeting
     let remaining: TimeInterval
@@ -114,6 +125,44 @@ struct OverviewCard: View {
     }
 }
 
+/// Lists new meetings with their dates, without countdowns.
+struct NewMeetingsCard: View {
+    static let color = Color(red: 0.20, green: 0.36, blue: 0.62)
+    static let maxShown = 3
+
+    let meetings: [Meeting]
+    var onDismiss: (() -> Void)?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(meetings.count == 1 ? "New meeting" : "\(meetings.count) new meetings", systemImage: "calendar.badge.plus")
+                .font(.subheadline.weight(.semibold))
+                .opacity(0.85)
+            ForEach(meetings.prefix(Self.maxShown)) { meeting in
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(meeting.displayTitle)
+                        .font(.headline)
+                        .lineLimit(1)
+                    Text(meeting.newMeetingSubtitle)
+                        .font(.caption)
+                        .opacity(0.8)
+                        .lineLimit(1)
+                }
+            }
+            if meetings.count > Self.maxShown {
+                Text("and \(meetings.count - Self.maxShown) more")
+                    .font(.caption)
+                    .opacity(0.8)
+            }
+        }
+        .padding(.leading, 18)
+        .padding(.trailing, 30)
+        .padding(.vertical, 12)
+        .frame(width: 280, alignment: .leading)
+        .card(color: Self.color, cornerRadius: 16, onDismiss: onDismiss)
+    }
+}
+
 private extension Meeting {
     var displayTitle: String {
         title.isEmpty ? "Untitled meeting" : title
@@ -123,6 +172,16 @@ private extension Meeting {
         let time = start.formatted(date: .omitted, time: .shortened)
         guard let host = url?.host() else { return time }
         return "\(time) · \(host)"
+    }
+
+    /// The day, time and whether the meeting repeats.
+    var newMeetingSubtitle: String {
+        let calendar = Calendar.current
+        let day = calendar.isDateInToday(start) ? "Today"
+            : calendar.isDateInTomorrow(start) ? "Tomorrow"
+            : start.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
+        let time = "\(day) \(start.formatted(date: .omitted, time: .shortened))"
+        return seriesID == nil ? time : "\(time) · Repeats"
     }
 }
 
@@ -214,6 +273,7 @@ enum Urgency {
         ReminderCard(meeting: meeting, remaining: 120, leadTime: 300)
         ReminderCard(meeting: meeting, remaining: 20, leadTime: 300)
         OverviewCard(meeting: meeting, remaining: 2 * 60 * 60 + 75)
+        NewMeetingsCard(meetings: [meeting])
     }
     .padding()
 }

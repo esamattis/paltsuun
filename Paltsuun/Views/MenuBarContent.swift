@@ -15,11 +15,18 @@ struct MenuBarContent: View {
         } else {
             Section("Upcoming") {
                 ForEach(upcoming) { meeting in
-                    Button(title(for: meeting)) {
+                    Button {
                         if let url = meeting.url {
                             NSWorkspace.shared.open(url)
                         } else {
                             showCalendar()
+                        }
+                    } label: {
+                        // Meetings in progress are marked, so they don't look like past ones.
+                        if meeting.start <= Date() {
+                            Label(title(for: meeting), systemImage: "record.circle")
+                        } else {
+                            Text(title(for: meeting))
                         }
                     }
                 }
@@ -42,6 +49,7 @@ struct MenuBarContent: View {
             }
             .keyboardShortcut("r")
             .disabled(calendarSync.isSyncing)
+            Button("Sync Log…") { show(window: "sync-log") }
         } else {
             Button("Connect Google Calendar…", action: showSettings)
         }
@@ -61,12 +69,17 @@ struct MenuBarContent: View {
         let format: Date.FormatStyle = Calendar.current.isDateInToday(meeting.start)
             ? .dateTime.hour().minute()
             : .dateTime.weekday(.abbreviated).hour().minute()
-        return "\(meeting.start.formatted(format))  \(meeting.title)"
+        let end = meeting.end.formatted(.dateTime.hour().minute())
+        return "\(meeting.start.formatted(format))–\(end)  \(meeting.title)"
     }
 
     private func showCalendar() {
+        show(window: "main")
+    }
+
+    private func show(window id: String) {
         NSApp.setActivationPolicy(.regular)
-        openWindow(id: "main")
+        openWindow(id: id)
         NSApp.activate()
     }
 

@@ -9,6 +9,8 @@ final class ReminderController {
     static let startedDisplayDuration: TimeInterval = 30
     /// How long a started meeting stays on screen after its link was opened automatically.
     static let openedDisplayDuration: TimeInterval = 5
+    /// How long the toast about new meetings stays on screen.
+    static let newMeetingsDisplayDuration: TimeInterval = 8
 
     private(set) var now = Date()
     /// Meetings with a countdown on screen, by reminder key.
@@ -16,6 +18,8 @@ final class ReminderController {
     /// The rest of today's meetings while their overview is on screen, by reminder key.
     /// Meetings that have a countdown in `reminders` are left out.
     private(set) var overview: [String: Meeting] = [:]
+    /// Meetings in the toast about new meetings, earliest first.
+    private(set) var newMeetings: [Meeting] = []
     /// The meeting starting closest to now, shown in the menu bar.
     private(set) var current: Meeting?
 
@@ -31,6 +35,8 @@ final class ReminderController {
     @ObservationIgnored private var overviewPanels: [String: ReminderPanel] = [:]
     @ObservationIgnored private var overviewUntil: Date?
     @ObservationIgnored private var overviewDismissed: Set<String> = []
+    @ObservationIgnored private var newMeetingsPanel: ReminderPanel?
+    @ObservationIgnored private var newMeetingsUntil: Date?
 
     init(store: MeetingStore) {
         self.store = store
@@ -85,6 +91,29 @@ final class ReminderController {
         tick()
     }
 
+    /// Briefly shows a toast about meetings added to a calendar. A repeating meeting is shown
+    /// once, as its next occurrence. Meetings that have ended or were declined are left out.
+    func announce(_ meetings: [Meeting]) {
+        let now = Date()
+        var seen: Set<String> = []
+        let upcoming = meetings
+            .filter { $0.end > now && !$0.isDeclined }
+            .sorted { $0.start < $1.start }
+            .filter { seen.insert($0.seriesID ?? $0.id).inserted }
+        guard !upcoming.isEmpty else { return }
+        // Replace a toast already on screen, since the new one may be a different size.
+        newMeetingsPanel?.close()
+        newMeetingsPanel = nil
+        newMeetings = upcoming
+        newMeetingsUntil = now.addingTimeInterval(Self.newMeetingsDisplayDuration)
+        tick()
+    }
+
+    func dismissNewMeetings() {
+        newMeetingsUntil = nil
+        tick()
+    }
+
     private func tick() {
         let now = Date()
         self.now = now
@@ -135,6 +164,9 @@ final class ReminderController {
         }
         if self.overview != overview { self.overview = overview }
 
+        if let newMeetingsUntil, now >= newMeetingsUntil { self.newMeetingsUntil = nil }
+        if newMeetingsUntil == nil, !newMeetings.isEmpty { newMeetings = [] }
+
         updatePanels()
     }
 
@@ -148,17 +180,25 @@ final class ReminderController {
             panel.fadeOut()
             overviewPanels[key] = nil
         }
+        if newMeetings.isEmpty, let newMeetingsPanel {
+            newMeetingsPanel.fadeOut()
+            self.newMeetingsPanel = nil
+        }
         for key in Self.keysWithoutPanel(reminders, panels) {
             panels[key] = present(ReminderView(controller: self, key: key))
         }
         for key in Self.keysWithoutPanel(overview, overviewPanels) {
             overviewPanels[key] = present(OverviewView(controller: self, key: key))
         }
+        if !newMeetings.isEmpty, newMeetingsPanel == nil {
+            newMeetingsPanel = present(NewMeetingsView(controller: self))
+        }
     }
 
     private func present(_ view: some View) -> ReminderPanel {
         let panel = ReminderPanel(rootView: view)
-        panel.place(avoiding: (Array(panels.values) + Array(overviewPanels.values)).map(\.frame))
+        let shown = Array(panels.values) + Array(overviewPanels.values) + [newMeetingsPanel].compactMap(\.self)
+        panel.place(avoiding: shown.map(\.frame))
         panel.orderFrontRegardless()
         return panel
     }

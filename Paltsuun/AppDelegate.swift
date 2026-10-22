@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let reminders = ReminderController(store: store)
         self.reminders = reminders
         activityMonitor = ActivityMonitor { reminders.showToday() }
+        calendarSync.onNewMeetings = { reminders.announce($0) }
         super.init()
     }
 

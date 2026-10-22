@@ -12,6 +12,8 @@ struct Meeting: Identifiable, Codable, Hashable {
     var url: URL?
     /// The user has declined the invitation. Declined meetings are shown but never reminded of.
     var isDeclined = false
+    /// Shared by all occurrences of a repeating event, nil for single events.
+    var seriesID: String?
 
     /// Parses user input into a meeting link. Adds `https://` when no scheme is given.
     static func parseLink(_ text: String) -> URL? {
@@ -25,10 +27,10 @@ struct Meeting: Identifiable, Codable, Hashable {
 
 extension Meeting {
     private enum CodingKeys: String, CodingKey {
-        case id, providerID, title, start, end, url, isDeclined
+        case id, providerID, title, start, end, url, isDeclined, seriesID
     }
 
-    /// `isDeclined` is optional so files written before it existed still load.
+    /// `isDeclined` and `seriesID` are optional so files written before they existed still load.
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
@@ -38,5 +40,6 @@ extension Meeting {
         end = try container.decode(Date.self, forKey: .end)
         url = try container.decodeIfPresent(URL.self, forKey: .url)
         isDeclined = try container.decodeIfPresent(Bool.self, forKey: .isDeclined) ?? false
+        seriesID = try container.decodeIfPresent(String.self, forKey: .seriesID)
     }
 }

@@ -23,6 +23,14 @@ struct PaltsuunApp: App {
         .defaultLaunchBehavior(.suppressed)
         .restorationBehavior(.disabled)
 
+        Window("Sync Log", id: "sync-log") {
+            SyncLogView()
+                .environment(appDelegate.calendarSync)
+        }
+        .defaultSize(width: 640, height: 480)
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+
         Settings {
             SettingsView()
                 .environment(appDelegate.calendarSync)

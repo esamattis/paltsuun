@@ -197,7 +197,8 @@ final class GoogleCalendarSource: RemoteCalendarSource {
             start: start,
             end: end,
             url: url,
-            isDeclined: isDeclined
+            isDeclined: isDeclined,
+            seriesID: event.recurringEventId.map { "\(id):\($0)" }
         )
     }
 
@@ -333,6 +334,7 @@ private struct Event: Decodable {
     }
 
     var id: String
+    var recurringEventId: String?
     var status: String?
     var eventType: String?
     var summary: String?

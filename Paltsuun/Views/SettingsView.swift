@@ -27,6 +27,8 @@ private struct GeneralSection: View {
     @AppStorage(AppSettings.startSoundKey) private var startSound = AppSettings.defaultStartSound
     @AppStorage(AppSettings.awayMinutesKey) private var awayMinutes = AppSettings.defaultAwayMinutes
     @AppStorage(AppSettings.overviewSecondsKey) private var overviewSeconds = AppSettings.defaultOverviewSeconds
+    @AppStorage(AppSettings.syncMinutesKey) private var syncMinutes = AppSettings.defaultSyncMinutes
+    @Environment(CalendarSync.self) private var calendarSync
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
@@ -68,6 +70,12 @@ private struct GeneralSection: View {
                 }
             }
             .disabled(awayMinutes == 0)
+            Picker("Check calendars for changes every", selection: $syncMinutes) {
+                ForEach(AppSettings.syncMinuteChoices, id: \.self) { minutes in
+                    Text(Self.format(minutes: minutes)).tag(minutes)
+                }
+            }
+            .onChange(of: syncMinutes) { calendarSync.start() }
             Toggle("Start at login", isOn: Binding(
                 get: { launchAtLogin },
                 set: { enabled in
@@ -85,6 +93,7 @@ private struct GeneralSection: View {
 
 private struct SyncedCalendarSection: View {
     @Environment(CalendarSync.self) private var calendarSync
+    @Environment(\.openWindow) private var openWindow
     let provider: SyncedCalendarProvider
 
     @State private var connectTask: Task<Void, Never>?
@@ -109,6 +118,10 @@ private struct SyncedCalendarSection: View {
                         Task { await calendarSync.disconnect(provider) }
                     }
                     Spacer()
+                    Button("Show Log…") {
+                        openWindow(id: "sync-log")
+                        NSApp.activate()
+                    }
                     Button("Sync Now") {
                         Task { await calendarSync.syncNow() }
                     }

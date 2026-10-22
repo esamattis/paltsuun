@@ -20,7 +20,10 @@ default browser.
 - **Today's meetings at a glance.** When you come back to the computer after being away,
   and when Paltsuun starts, small countdowns to the rest of today's meetings are shown
   for a few seconds.
+- **New meeting toast.** When a meeting is added to a synced calendar, or you're invited
+  to one, a toast shows it briefly. A new repeating meeting is shown once.
 - **Menu bar app** that lists upcoming meetings.
+- **Sync log** of each calendar sync and the meetings it added, changed or removed.
 - **Calendar view** for adding and editing meetings.
 - **Google Calendar sync.** Declined meetings never remind you.
 
@@ -36,6 +39,7 @@ The *Test* button next to the sound plays the selected sound.
 | Sound when meeting starts             | Glass        |
 | Show today's meetings when back after | 30 min       |
 | Show today's meetings for             | 10 s         |
+| Check calendars for changes every     | 2 min        |
 | Start at login                        | Off          |
 
 ## Calendar providers
@@ -63,12 +67,23 @@ fetching events. Each source is wrapped in a `SyncedCalendarProvider`. This prov
 keeps a read-only local copy of the remote events in `synced-<id>.json` in the same
 folder, so meetings still remind you when you're offline.
 
-`CalendarSync` syncs every connected source every 15 minutes, when the calendar shows
+`CalendarSync` syncs every connected source every few minutes (2 by default, see
+*Check calendars for changes every*), when the calendar shows
 a month outside the synced range, and when you choose *Sync Calendars Now* from the
 menu bar or click the refresh button in the calendar window (⌘R). Each sync covers the
 past week, the next 90 days and the month shown in the calendar. The remote calendar
 is the source of truth: each sync replaces the local copies in that range, so events
 changed or deleted remotely are changed or deleted locally.
+
+Each sync reports the meetings it added, changed and removed. These are listed in the
+sync log, opened with *Sync Log…* in the menu bar menu or *Show Log…* in Settings. The
+log is kept in memory and holds the latest 500 syncs. An added meeting is *new* when it
+falls in the range covered by the previous sync, so it was created after that sync.
+Meetings that only came into range as it moved forward aren't new. New meetings that
+haven't ended and aren't declined are shown in a toast for a few seconds. A repeating
+meeting is shown once, as its next occurrence. Meetings already in the local copy when
+Paltsuun starts don't count as new, but meetings created while Paltsuun wasn't running
+do.
 
 To add another service, such as Outlook, implement `RemoteCalendarSource`, add a
 `SyncedCalendarProvider` for it in `AppDelegate.swift`, and add its setup fields to
