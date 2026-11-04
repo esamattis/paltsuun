@@ -13,6 +13,7 @@ struct ReminderView: View {
                 remaining: meeting.start.timeIntervalSince(controller.now),
                 leadTime: controller.leadTime,
                 closesIn: controller.closesIn(meeting),
+                onJoin: { controller.dismiss(meeting) },
                 onDismiss: { controller.dismiss(meeting) }
             )
         }
@@ -85,6 +86,8 @@ struct ReminderCard: View {
     let leadTime: TimeInterval
     /// Seconds until the card disappears, once the meeting has started.
     var closesIn: TimeInterval?
+    /// Called after the meeting link was opened.
+    var onJoin: (() -> Void)?
     var onDismiss: (() -> Void)?
 
     private var seconds: Int { Int(remaining.rounded(.up)) }
@@ -110,7 +113,10 @@ struct ReminderCard: View {
                 .lineLimit(1)
 
             Button {
-                if let url = meeting.url { NSWorkspace.shared.open(url) }
+                if let url = meeting.url {
+                    NSWorkspace.shared.open(url)
+                    onJoin?()
+                }
             } label: {
                 Label(meeting.url == nil ? "No meeting link" : "Join meeting", systemImage: "video.fill")
                     .frame(maxWidth: .infinity)
