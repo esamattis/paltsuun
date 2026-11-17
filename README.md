@@ -23,7 +23,8 @@ default browser.
 - **New meeting toast.** When a meeting is added to a synced calendar, or you're invited
   to one, a toast shows it briefly. A new repeating meeting is shown once.
 - Toasts that disappear by themselves show the seconds left next to their close button.
-- **Menu bar app** that lists upcoming meetings.
+- **Menu bar app** that lists upcoming meetings. Clicking one shows its countdown; clicking
+  a meeting in progress opens its link.
 - **Quick events.** *New Quick Event…* in the menu bar menu adds a local meeting. Set
   when it starts with a slider (time from now) or by entering the time. Each updates the
   other.

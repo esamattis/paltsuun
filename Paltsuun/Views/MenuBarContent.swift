@@ -16,7 +16,10 @@ struct MenuBarContent: View {
             Section("Upcoming") {
                 ForEach(upcoming) { meeting in
                     Button {
-                        if let url = meeting.url {
+                        // Upcoming meetings show their countdown; ongoing ones can only be joined.
+                        if reminders.canShow(meeting) {
+                            reminders.show(meeting)
+                        } else if let url = meeting.url {
                             NSWorkspace.shared.open(url)
                         } else {
                             showCalendar()
