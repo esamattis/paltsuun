@@ -16,6 +16,11 @@ default browser.
   *Join meeting* button. It changes from green to red as the meeting approaches.
 - **Auto-join.** Opens the meeting link (Google Meet, Zoom, Teams or any URL) when the
   countdown ends.
+- **Dismissing a countdown.** Closing a countdown, or joining from it, dismisses the
+  meeting: no countdown, no auto-join and no entry in today's meetings. Closing a countdown
+  shown from the menu bar before its usual time only hides it until then. The calendar marks
+  dismissed meetings with a crossed-out bell; click the bell (or use the context menu) to
+  dismiss a meeting in advance or to restore its countdown. Dismissals survive restarts.
 - **Start sound** when a meeting starts.
 - **Today's meetings at a glance.** When you come back to the computer after being away,
   and when Paltsuun starts, meetings already in progress (with a *Join meeting* button)

@@ -14,7 +14,7 @@ struct ReminderView: View {
                 leadTime: controller.leadTime,
                 closesIn: controller.closesIn(meeting),
                 onJoin: { controller.dismiss(meeting) },
-                onDismiss: { controller.dismiss(meeting) }
+                onDismiss: { controller.close(meeting) }
             )
         }
     }

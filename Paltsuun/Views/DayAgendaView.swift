@@ -2,13 +2,12 @@ import AppKit
 import SwiftUI
 
 struct DayAgendaView: View {
+    @Environment(ReminderController.self) private var reminders
     let date: Date
     let meetings: [Meeting]
     let onCreate: () -> Void
     let isEditable: (Meeting) -> Bool
     let onEdit: (Meeting) -> Void
-    let canShowCountdown: (Meeting) -> Bool
-    let onShowCountdown: (Meeting) -> Void
     let onDelete: (Meeting) -> Void
 
     var body: some View {
@@ -48,9 +47,10 @@ struct DayAgendaView: View {
                             if let url = meeting.url {
                                 Button("Open Meeting Link") { NSWorkspace.shared.open(url) }
                             }
-                            if canShowCountdown(meeting) {
-                                Button("Show Countdown") { onShowCountdown(meeting) }
+                            if reminders.canShow(meeting) {
+                                Button("Show Countdown") { reminders.show(meeting) }
                             }
+                            DismissCountdownButton(meeting: meeting)
                             if editable {
                                 Divider()
                                 Button("Delete", role: .destructive) { onDelete(meeting) }
@@ -63,9 +63,11 @@ struct DayAgendaView: View {
 }
 
 private struct AgendaRow: View {
+    @Environment(ReminderController.self) private var reminders
     let meeting: Meeting
 
     var body: some View {
+        let isDismissed = reminders.isDismissed(meeting)
         HStack(alignment: .top, spacing: 10) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(meeting.isDeclined ? Color.secondary : Color.accentColor)
@@ -87,11 +89,41 @@ private struct AgendaRow: View {
                     Label("Declined", systemImage: "xmark.circle")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } else if isDismissed {
+                    Label("Countdown dismissed", systemImage: "bell.slash")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             Spacer(minLength: 0)
+            if reminders.canDismiss(meeting) {
+                Button {
+                    reminders.setDismissed(meeting, !isDismissed)
+                } label: {
+                    Image(systemName: isDismissed ? "bell.slash" : "bell")
+                        .foregroundStyle(isDismissed ? Color.secondary : Color.accentColor)
+                }
+                .buttonStyle(.borderless)
+                .help(isDismissed ? "Restore the countdown" : "Dismiss the countdown")
+            }
         }
         .padding(.vertical, 4)
         .opacity(meeting.isDeclined ? 0.6 : 1)
+    }
+}
+
+/// A menu item that dismisses the meeting's countdown, or restores a dismissed one.
+struct DismissCountdownButton: View {
+    @Environment(ReminderController.self) private var reminders
+    let meeting: Meeting
+
+    var body: some View {
+        if reminders.canDismiss(meeting) {
+            if reminders.isDismissed(meeting) {
+                Button("Restore Countdown") { reminders.setDismissed(meeting, false) }
+            } else {
+                Button("Dismiss Countdown") { reminders.setDismissed(meeting, true) }
+            }
+        }
     }
 }

@@ -27,8 +27,6 @@ struct ContentView: View {
                 onCreate: { newMeeting(on: selectedDate) },
                 isEditable: store.isEditable,
                 onEdit: edit,
-                canShowCountdown: reminders.canShow,
-                onShowCountdown: reminders.show,
                 onDelete: delete
             )
             .frame(width: 300)

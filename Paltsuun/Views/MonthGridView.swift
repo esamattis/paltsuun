@@ -59,6 +59,7 @@ struct MonthGridView: View {
             ForEach(meetings.prefix(Self.maxVisibleMeetings)) { meeting in
                 MeetingChip(meeting: meeting)
                     .onTapGesture { onEdit(meeting) }
+                    .contextMenu { DismissCountdownButton(meeting: meeting) }
             }
             if meetings.count > Self.maxVisibleMeetings {
                 Text("+\(meetings.count - Self.maxVisibleMeetings) more")
@@ -78,10 +79,17 @@ struct MonthGridView: View {
 }
 
 private struct MeetingChip: View {
+    @Environment(ReminderController.self) private var reminders
     let meeting: Meeting
 
     var body: some View {
+        let isDismissed = !meeting.isDeclined && reminders.isDismissed(meeting)
         HStack(spacing: 4) {
+            if isDismissed {
+                Image(systemName: "bell.slash")
+                    .foregroundStyle(.secondary)
+                    .help("Countdown dismissed")
+            }
             Text(meeting.start.formatted(date: .omitted, time: .shortened))
                 .foregroundStyle(.secondary)
             Text(meeting.title.isEmpty ? "Untitled" : meeting.title)

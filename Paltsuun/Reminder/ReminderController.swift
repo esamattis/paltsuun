@@ -32,6 +32,11 @@ final class ReminderController {
     private(set) var noLinkShownAt: Date?
     /// The meeting starting closest to now, shown in the menu bar.
     private(set) var current: Meeting?
+    /// Meetings whose countdown was dismissed, with their start, by reminder key. Saved, so
+    /// they stay dismissed when the app restarts.
+    private var dismissed: [String: Date] = ReminderController.loadDismissed() {
+        didSet { UserDefaults.standard.set(dismissed, forKey: Self.dismissedKey) }
+    }
 
     @ObservationIgnored private let store: MeetingStore
     @ObservationIgnored private var timer: Timer?
@@ -41,7 +46,6 @@ final class ReminderController {
     @ObservationIgnored private var opened: [String: Date] = [:]
     /// Started meetings without a link, whose countdown gave way to the big message.
     @ObservationIgnored private var startedWithoutLink: [String: Date] = [:]
-    @ObservationIgnored private var dismissed: [String: Date] = [:]
     /// Meetings whose countdown was shown manually, before the lead time.
     @ObservationIgnored private var shown: [String: Date] = [:]
     @ObservationIgnored private var overviewPanels: [String: ReminderPanel] = [:]
@@ -80,7 +84,40 @@ final class ReminderController {
         panels[key]?.orderFrontRegardless()
     }
 
-    /// Hides the meeting's countdown. Its link isn't opened automatically either.
+    /// Closes the meeting's countdown. A countdown shown manually before the lead time is only
+    /// hidden, so the meeting still reminds as usual. Others are dismissed.
+    func close(_ meeting: Meeting) {
+        let key = Self.key(for: meeting)
+        guard shown[key] != nil, meeting.start.timeIntervalSince(Date()) > leadTime else {
+            dismiss(meeting)
+            return
+        }
+        shown[key] = nil
+        armed[key] = nil
+        tick()
+    }
+
+    func isDismissed(_ meeting: Meeting) -> Bool {
+        dismissed[Self.key(for: meeting)] != nil
+    }
+
+    /// Whether dismissing still matters: the meeting hasn't ended and isn't declined.
+    func canDismiss(_ meeting: Meeting) -> Bool {
+        !meeting.isDeclined && meeting.end > Date()
+    }
+
+    /// Dismisses the meeting, or makes a dismissed meeting remind as usual again.
+    func setDismissed(_ meeting: Meeting, _ isDismissed: Bool) {
+        if isDismissed {
+            dismiss(meeting)
+        } else {
+            dismissed[Self.key(for: meeting)] = nil
+            tick()
+        }
+    }
+
+    /// Hides the meeting's countdown. Its link isn't opened automatically either, and it's left
+    /// out of the overview of today's meetings.
     func dismiss(_ meeting: Meeting) {
         let key = Self.key(for: meeting)
         dismissed[key] = meeting.start
@@ -275,8 +312,17 @@ final class ReminderController {
         armed = armed.filter { $0.value >= date }
         opened = opened.filter { $0.value >= date }
         startedWithoutLink = startedWithoutLink.filter { $0.value >= date }
-        dismissed = dismissed.filter { $0.value >= date }
+        // Only when something changes, since views observe it.
+        if dismissed.values.contains(where: { $0 < date }) {
+            dismissed = dismissed.filter { $0.value >= date }
+        }
         shown = shown.filter { $0.value >= date }
+    }
+
+    private static let dismissedKey = "dismissedReminders"
+
+    private static func loadDismissed() -> [String: Date] {
+        UserDefaults.standard.dictionary(forKey: dismissedKey) as? [String: Date] ?? [:]
     }
 
     /// Includes the start time so a rescheduled meeting reminds again.
