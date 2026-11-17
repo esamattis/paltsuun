@@ -10,6 +10,9 @@ A few minutes before a meeting starts, Paltsuun shows a floating countdown above
 other windows. When the countdown reaches zero, it opens the meeting link in your
 default browser.
 
+<img width="340" height="230" alt="image" src="https://github.com/user-attachments/assets/58593497-8b75-4ef6-88f1-9ef2a82de7b1" />
+
+
 ## Features
 
 - **Floating countdown** above all windows, spaces and full-screen apps, with a
@@ -36,6 +39,9 @@ default browser.
 - **Sync log** of each calendar sync and the meetings it added, changed or removed.
 - **Calendar view** for adding and editing meetings.
 - **Google Calendar sync.** Declined meetings never remind you.
+
+<img width="543" height="536" alt="image" src="https://github.com/user-attachments/assets/f5fa5669-b0f5-4034-a2d4-0c2265976953" />
+
 
 ## Settings
 
